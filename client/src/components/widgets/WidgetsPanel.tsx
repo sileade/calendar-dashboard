@@ -7,12 +7,14 @@ import {
   LayoutGrid, 
   Bus, 
   Car,
+  Cloud,
   Settings,
   X,
   GripVertical
 } from 'lucide-react';
 import { TransportWidget } from './TransportWidget';
 import { TrafficWidget } from './TrafficWidget';
+import { WeatherWidget } from './WeatherWidget';
 
 interface WidgetConfig {
   id: string;
@@ -23,6 +25,13 @@ interface WidgetConfig {
 }
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
+  {
+    id: 'weather',
+    name: 'Погода',
+    icon: <Cloud className="h-4 w-4" />,
+    enabled: true,
+    component: WeatherWidget,
+  },
   {
     id: 'transport',
     name: 'Транспорт СПб',

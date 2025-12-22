@@ -21,7 +21,10 @@ import { toast } from 'sonner';
 import { KioskSettingsModal, useKioskMode, useKioskSettings } from '@/components/calendar/KioskSettings';
 import { useHomerSwipe } from '@/hooks/useSwipeGesture';
 import { WidgetsPanel } from '@/components/widgets/WidgetsPanel';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Palette } from 'lucide-react';
+import { ThemeSettings } from '@/components/calendar/ThemeSettings';
+import { useAdaptiveTheme } from '@/hooks/useAdaptiveTheme';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -34,6 +37,11 @@ export default function Home() {
   const [initialEventDate, setInitialEventDate] = useState<Date | undefined>();
   const [isKioskSettingsOpen, setIsKioskSettingsOpen] = useState(false);
   const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
+  const [isThemeSettingsOpen, setIsThemeSettingsOpen] = useState(false);
+  
+  // Adaptive theme and responsive layout
+  const adaptiveTheme = useAdaptiveTheme();
+  const { screenInfo, layoutConfig, isMobile, isTablet, isTouch } = useResponsiveLayout();
   
   // Kiosk mode
   const kioskSettings = useKioskMode();
@@ -402,6 +410,17 @@ export default function Home() {
               <LayoutGrid className="w-5 h-5" />
             </Button>
             
+            {/* Theme Settings */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsThemeSettingsOpen(true)}
+              className="rounded-full"
+              title="Theme Settings"
+            >
+              <Palette className="w-5 h-5" />
+            </Button>
+            
             {/* Kiosk Mode */}
             <Button
               variant="ghost"
@@ -488,6 +507,11 @@ export default function Home() {
       <WidgetsPanel
         isOpen={isWidgetsPanelOpen}
         onOpenChange={setIsWidgetsPanelOpen}
+      />
+
+      <ThemeSettings
+        isOpen={isThemeSettingsOpen}
+        onClose={() => setIsThemeSettingsOpen(false)}
       />
       
       {/* Kiosk Mode Indicator */}

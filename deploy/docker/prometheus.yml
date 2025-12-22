@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'calendar-dashboard'
+    static_configs:
+      - targets: ['calendar:3000']
+    metrics_path: '/api/metrics'
+
+  - job_name: 'broadcast-server'
+    static_configs:
+      - targets: ['broadcast:3001']
+    metrics_path: '/health'
+
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8080']

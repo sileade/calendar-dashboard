@@ -132,3 +132,49 @@
 - [x] Widget visibility toggle
 - [x] Widget position configuration
 - [x] Responsive layout for widgets
+
+
+## Enhanced Features (v1.4)
+
+### Real API Integration
+- [x] Connect SPb transport API (transport.orgp.spb.ru)
+- [x] Connect Yandex Traffic API with real data
+- [x] Add API key configuration in settings
+- [x] Error handling for API failures
+- [x] Rate limiting and caching
+
+### Geolocation
+- [x] GPS-based location detection
+- [x] Auto-detect nearest stops
+- [x] Location permission handling
+- [x] Fallback to manual location input
+- [x] Save preferred location
+
+### Weather Widget
+- [x] Weather API integration (OpenWeatherMap)
+- [x] Current weather display
+- [x] 5-day forecast
+- [x] Weather icons and animations
+- [x] Temperature units toggle (C/F)
+
+### Server Deployment for Kiosks
+- [x] Docker containerization
+- [x] Docker Compose with Traefik
+- [x] Multi-tablet broadcasting support
+- [x] Centralized configuration
+- [x] Health monitoring endpoint
+- [x] Auto-restart on failure
+
+### Adaptive Theme
+- [x] Ambient light sensor integration
+- [x] Time-based theme switching
+- [x] Configurable sunrise/sunset times
+- [x] Smooth theme transitions
+- [x] Theme override option
+
+### Screen Resolution Adaptation
+- [x] Responsive breakpoints for tablets
+- [x] Font scaling based on screen size
+- [x] Touch-friendly UI for different sizes
+- [x] Orientation support (portrait/landscape)
+- [x] DPI-aware rendering
