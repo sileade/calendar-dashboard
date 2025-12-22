@@ -104,3 +104,55 @@ export const syncLogs = mysqlTable("sync_logs", {
 
 export type SyncLog = typeof syncLogs.$inferSelect;
 export type InsertSyncLog = typeof syncLogs.$inferInsert;
+
+/**
+ * Event reminders - notification settings for events
+ */
+export const eventReminders = mysqlTable("event_reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  userId: int("userId").notNull(),
+  reminderTime: bigint("reminderTime", { mode: "number" }).notNull(), // Minutes before event
+  notificationType: mysqlEnum("notificationType", ["push", "email", "in_app"]).default("push").notNull(),
+  isSent: boolean("isSent").default(false).notNull(),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EventReminder = typeof eventReminders.$inferSelect;
+export type InsertEventReminder = typeof eventReminders.$inferInsert;
+
+/**
+ * User notification preferences
+ */
+export const notificationPreferences = mysqlTable("notification_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  defaultReminders: text("defaultReminders"), // JSON array of default reminder times
+  pushEnabled: boolean("pushEnabled").default(true).notNull(),
+  emailEnabled: boolean("emailEnabled").default(false).notNull(),
+  soundEnabled: boolean("soundEnabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
+
+/**
+ * In-app notifications center
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  eventId: int("eventId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  type: mysqlEnum("type", ["reminder", "sync", "system"]).default("reminder").notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  actionUrl: text("actionUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

@@ -1,6 +1,6 @@
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, calendarConnections, events, syncLogs, InsertCalendarConnection, InsertEvent, InsertSyncLog } from "../drizzle/schema";
+import { InsertUser, users, calendarConnections, events, syncLogs, eventReminders, notifications, notificationPreferences, InsertCalendarConnection, InsertEvent, InsertSyncLog, InsertEventReminder, InsertNotification, InsertNotificationPreference } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -226,4 +226,149 @@ export async function getSyncLogs(userId: number, limit = 20) {
     .where(eq(syncLogs.userId, userId))
     .orderBy(desc(syncLogs.startedAt))
     .limit(limit);
+}
+
+// Notification operations
+export async function getNotifications(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function createNotification(notification: InsertNotification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(notifications).values(notification);
+  return result[0].insertId;
+}
+
+export async function markNotificationAsRead(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+}
+
+export async function markAllNotificationsAsRead(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(eq(notifications.userId, userId));
+}
+
+export async function deleteNotification(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(notifications)
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+}
+
+// Notification Preferences operations
+export async function getNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(notificationPreferences)
+    .where(eq(notificationPreferences.userId, userId))
+    .limit(1);
+  return result[0] || null;
+}
+
+export async function updateNotificationPreferences(userId: number, updates: Partial<InsertNotificationPreference>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getNotificationPreferences(userId);
+  if (existing) {
+    await db.update(notificationPreferences)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(notificationPreferences.userId, userId));
+  } else {
+    await db.insert(notificationPreferences).values({
+      userId,
+      ...updates,
+    });
+  }
+}
+
+// Event Reminder operations
+export async function getEventReminders(eventId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(eventReminders)
+    .where(and(eq(eventReminders.eventId, eventId), eq(eventReminders.userId, userId)));
+}
+
+export async function createEventReminder(reminder: InsertEventReminder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(eventReminders).values(reminder);
+  return result[0].insertId;
+}
+
+export async function deleteEventReminder(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(eventReminders)
+    .where(and(eq(eventReminders.id, id), eq(eventReminders.userId, userId)));
+}
+
+export async function setEventReminders(eventId: number, userId: number, reminderTimes: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Delete existing reminders for this event
+  await db.delete(eventReminders)
+    .where(and(eq(eventReminders.eventId, eventId), eq(eventReminders.userId, userId)));
+  
+  // Create new reminders
+  if (reminderTimes.length > 0) {
+    const newReminders = reminderTimes.map(time => ({
+      eventId,
+      userId,
+      reminderTime: time,
+      notificationType: 'push' as const,
+      isSent: false,
+    }));
+    await db.insert(eventReminders).values(newReminders);
+  }
+}
+
+export async function getPendingReminders(beforeTime: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Get all unsent reminders where the reminder time has passed
+  return db.select({
+    reminder: eventReminders,
+    event: events,
+  })
+    .from(eventReminders)
+    .innerJoin(events, eq(eventReminders.eventId, events.id))
+    .where(and(
+      eq(eventReminders.isSent, false),
+      // Check if reminder time (event start - reminder minutes) is before now
+    ));
+}
+
+export async function markReminderAsSent(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(eventReminders)
+    .set({ isSent: true, sentAt: new Date() })
+    .where(eq(eventReminders.id, id));
 }

@@ -13,7 +13,10 @@ import { SyncSettingsModal } from '@/components/calendar/SyncSettingsModal';
 import { PrintModal } from '@/components/calendar/PrintModal';
 import { CalendarView } from '@shared/types';
 import { Event } from '../../../drizzle/schema';
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange, Printer, RefreshCw, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange, Printer, RefreshCw, LogIn, Search, Bell, Repeat } from 'lucide-react';
+import { SearchFilter } from '@/components/calendar/SearchFilter';
+import { NotificationCenter, useNotificationPermission, showBrowserNotification } from '@/components/calendar/NotificationCenter';
+import { ReminderTime } from '@shared/types';
 import { toast } from 'sonner';
 
 export default function Home() {
@@ -140,6 +143,8 @@ export default function Home() {
     setIsEventModalOpen(true);
   };
 
+  const setReminders = trpc.reminders.setForEvent.useMutation();
+
   const handleSaveEvent = (eventData: {
     title: string;
     description?: string;
@@ -148,14 +153,36 @@ export default function Home() {
     endTime: number;
     isAllDay: boolean;
     color: string;
+    recurrenceRule?: string;
+    reminders?: ReminderTime[];
   }) => {
+    const { reminders: reminderTimes, ...eventPayload } = eventData;
+    
     if (selectedEvent) {
       updateEvent.mutate({
         id: selectedEvent.id,
-        ...eventData,
+        ...eventPayload,
+      }, {
+        onSuccess: () => {
+          if (reminderTimes && reminderTimes.length > 0) {
+            setReminders.mutate({
+              eventId: selectedEvent.id,
+              reminderTimes,
+            });
+          }
+        },
       });
     } else {
-      createEvent.mutate(eventData);
+      createEvent.mutate(eventPayload, {
+        onSuccess: (result) => {
+          if (reminderTimes && reminderTimes.length > 0 && result.id) {
+            setReminders.mutate({
+              eventId: result.id,
+              reminderTimes,
+            });
+          }
+        },
+      });
     }
   };
 
@@ -350,8 +377,17 @@ export default function Home() {
             >
               <Printer className="w-5 h-5" />
             </Button>
+            
+            {/* Notifications */}
+            <NotificationCenter />
           </div>
         </header>
+        
+        {/* Search Bar */}
+        <SearchFilter
+          events={events}
+          onEventClick={handleEventClick}
+        />
 
         {/* Calendar View */}
         <main className="flex-1 overflow-hidden">

@@ -6,9 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Event } from '../../../../drizzle/schema';
-import { CALENDAR_COLORS } from '@shared/types';
-import { MapPin, Clock, AlignLeft, Palette, Trash2 } from 'lucide-react';
+import { CALENDAR_COLORS, ReminderTime } from '@shared/types';
+import { MapPin, Clock, AlignLeft, Palette, Trash2, Repeat } from 'lucide-react';
+import { RecurrenceSelector } from './RecurrenceSelector';
+import { ReminderSelector } from './ReminderSelector';
+import { parseRRule, describeRecurrence } from '@shared/recurrence';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -23,6 +27,8 @@ interface EventModalProps {
     endTime: number;
     isAllDay: boolean;
     color: string;
+    recurrenceRule?: string;
+    reminders?: ReminderTime[];
   }) => void;
   onDelete?: (eventId: number) => void;
 }
@@ -37,6 +43,8 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
   const [endTime, setEndTime] = useState('10:00');
   const [isAllDay, setIsAllDay] = useState(false);
   const [color, setColor] = useState('#007AFF');
+  const [recurrenceRule, setRecurrenceRule] = useState<string | null>(null);
+  const [reminders, setReminders] = useState<ReminderTime[]>([15]); // Default 15 min reminder
 
   useEffect(() => {
     if (event) {
@@ -51,6 +59,8 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
       setEndTime(format(end, 'HH:mm'));
       setIsAllDay(event.isAllDay);
       setColor(event.color || '#007AFF');
+      setRecurrenceRule(event.recurrenceRule || null);
+      // Reminders would be loaded separately via API
     } else if (initialDate) {
       setTitle('');
       setDescription('');
@@ -63,6 +73,8 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
       setEndTime(format(endHour, 'HH:mm'));
       setIsAllDay(false);
       setColor('#007AFF');
+      setRecurrenceRule(null);
+      setReminders([15]);
     }
   }, [event, initialDate, isOpen]);
 
@@ -85,6 +97,8 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
       endTime: endDateTime,
       isAllDay,
       color,
+      recurrenceRule: recurrenceRule || undefined,
+      reminders,
     });
     onClose();
   };
@@ -96,9 +110,11 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
     }
   };
 
+  const eventStartDate = startDate ? new Date(startDate) : undefined;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] apple-shadow-lg">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto apple-shadow-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             {event ? 'Edit Event' : 'New Event'}
@@ -168,6 +184,15 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
             </div>
           </div>
 
+          {/* Recurrence */}
+          <RecurrenceSelector
+            value={recurrenceRule}
+            onChange={setRecurrenceRule}
+            eventStartDate={eventStartDate}
+          />
+
+          <Separator />
+
           {/* Location */}
           <div className="flex items-center gap-3">
             <MapPin className="w-5 h-5 text-muted-foreground" />
@@ -190,6 +215,16 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
             />
           </div>
 
+          <Separator />
+
+          {/* Reminders */}
+          <ReminderSelector
+            value={reminders}
+            onChange={setReminders}
+          />
+
+          <Separator />
+
           {/* Color */}
           <div className="flex items-center gap-3">
             <Palette className="w-5 h-5 text-muted-foreground" />
@@ -207,6 +242,14 @@ export function EventModal({ isOpen, onClose, event, initialDate, onSave, onDele
               ))}
             </div>
           </div>
+
+          {/* Recurrence indicator for existing events */}
+          {event?.recurrenceRule && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded-lg">
+              <Repeat className="w-4 h-4" />
+              <span>{describeRecurrence(parseRRule(event.recurrenceRule)!)}</span>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex justify-between">

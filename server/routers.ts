@@ -206,6 +206,95 @@ export const appRouter = router({
       }),
   }),
 
+  // Notifications
+  notifications: router({
+    list: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getNotifications(ctx.user.id, input?.limit || 50);
+      }),
+
+    markAsRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.markNotificationAsRead(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    markAllAsRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await db.markAllNotificationsAsRead(ctx.user.id);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteNotification(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    preferences: protectedProcedure
+      .query(async ({ ctx }) => {
+        return db.getNotificationPreferences(ctx.user.id);
+      }),
+
+    updatePreferences: protectedProcedure
+      .input(z.object({
+        defaultReminders: z.string().optional(),
+        pushEnabled: z.boolean().optional(),
+        emailEnabled: z.boolean().optional(),
+        soundEnabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateNotificationPreferences(ctx.user.id, input);
+        return { success: true };
+      }),
+  }),
+
+  // Reminders
+  reminders: router({
+    list: protectedProcedure
+      .input(z.object({ eventId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return db.getEventReminders(input.eventId, ctx.user.id);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        eventId: z.number(),
+        reminderTime: z.number(),
+        notificationType: z.enum(['push', 'email', 'in_app']).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createEventReminder({
+          eventId: input.eventId,
+          userId: ctx.user.id,
+          reminderTime: input.reminderTime,
+          notificationType: input.notificationType || 'push',
+          isSent: false,
+        });
+        return { id };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteEventReminder(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    setForEvent: protectedProcedure
+      .input(z.object({
+        eventId: z.number(),
+        reminderTimes: z.array(z.number()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.setEventReminders(input.eventId, ctx.user.id, input.reminderTimes);
+        return { success: true };
+      }),
+  }),
+
   // Sync operations
   sync: router({
     logs: protectedProcedure

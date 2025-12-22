@@ -67,3 +67,57 @@ export interface PrintOptions {
   showWeekNumbers?: boolean;
   includeNotes?: boolean;
 }
+
+// Recurrence types (RRULE support)
+export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface RecurrenceRule {
+  frequency: RecurrenceFrequency;
+  interval: number; // Every N days/weeks/months/years
+  endDate?: number; // Unix timestamp
+  count?: number; // Number of occurrences
+  byDay?: number[]; // 0=Sunday, 1=Monday, etc.
+  byMonthDay?: number[]; // Day of month (1-31)
+  byMonth?: number[]; // Month (1-12)
+}
+
+export interface RecurrenceException {
+  originalDate: number; // Original occurrence date
+  isDeleted?: boolean; // If true, this occurrence is skipped
+  modifiedEvent?: Partial<CalendarEventInput>; // Modified data for this occurrence
+}
+
+// Reminder types
+export type ReminderTime = 0 | 5 | 10 | 15 | 30 | 60 | 120 | 1440 | 2880; // Minutes before event
+
+export const REMINDER_OPTIONS: { value: ReminderTime; label: string }[] = [
+  { value: 0, label: 'At time of event' },
+  { value: 5, label: '5 minutes before' },
+  { value: 10, label: '10 minutes before' },
+  { value: 15, label: '15 minutes before' },
+  { value: 30, label: '30 minutes before' },
+  { value: 60, label: '1 hour before' },
+  { value: 120, label: '2 hours before' },
+  { value: 1440, label: '1 day before' },
+  { value: 2880, label: '2 days before' },
+];
+
+export interface NotificationPayload {
+  title: string;
+  body: string;
+  icon?: string;
+  badge?: string;
+  tag?: string;
+  data?: {
+    eventId?: number;
+    url?: string;
+  };
+}
+
+// Search and filter types
+export interface SearchFilters {
+  query: string;
+  sources: ('local' | 'google' | 'apple' | 'notion')[];
+  dateFrom: Date | null;
+  dateTo: Date | null;
+}

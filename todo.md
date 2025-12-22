@@ -37,3 +37,31 @@
 - [x] Automatic sync on event changes
 - [x] Manual sync trigger option
 - [x] Sync status indicators
+
+## New Features (v1.1)
+
+### Search & Filtering
+- [x] Search bar component with real-time filtering
+- [x] Filter by event title/name
+- [x] Filter by date range
+- [x] Filter by calendar source (Google/Apple/Notion/Local)
+- [x] Search results highlighting
+- [x] Clear filters button
+
+### Recurring Events
+- [x] RRULE support in database schema
+- [x] Recurrence pattern UI (daily/weekly/monthly/yearly)
+- [x] Custom recurrence intervals
+- [x] End date or occurrence count options
+- [x] Recurrence exceptions handling (database schema)
+- [ ] Edit single occurrence vs entire series (future enhancement)
+- [x] Visual indicator for recurring events
+
+### Push Notifications
+- [x] Browser notification permission request
+- [x] Reminder settings per event (5min/15min/30min/1hr/1day before)
+- [x] Default reminder preferences in settings
+- [x] Notification center component
+- [x] In-app notification center
+- [x] Sound/vibration options (preferences)
+- [ ] Snooze functionality (future enhancement)
