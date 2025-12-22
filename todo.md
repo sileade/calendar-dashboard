@@ -70,40 +70,40 @@
 ## Documentation & Deployment (v1.2)
 
 ### Documentation
-- [ ] README.md with project overview
-- [ ] API documentation
-- [ ] Architecture documentation
-- [ ] Installation guide
-- [ ] Configuration guide
-- [ ] User manual
+- [x] README.md with project overview
+- [x] API documentation
+- [x] Architecture documentation
+- [x] Installation guide
+- [x] Configuration guide
+- [x] User manual
 
 ### GitHub Repository
-- [ ] Create repository
-- [ ] Push code to GitHub
-- [ ] Add .gitignore
-- [ ] Add LICENSE file
+- [x] Create repository
+- [x] Push code to GitHub
+- [x] Add .gitignore
+- [x] Add LICENSE file
 
 ### Kiosk Mode Adaptation
-- [ ] Fullscreen mode support
-- [ ] Auto-hide cursor
-- [ ] Disable context menu
-- [ ] Touch-friendly UI adjustments
-- [ ] Auto-refresh functionality
-- [ ] Offline mode support
+- [x] Fullscreen mode support
+- [x] Auto-hide cursor
+- [x] Disable context menu
+- [x] Touch-friendly UI adjustments
+- [x] Auto-refresh functionality
+- [ ] Offline mode support (future enhancement)
 
 ### Raspberry Pi Deployment
-- [ ] Raspberry Pi OS setup guide
-- [ ] Chromium kiosk configuration
-- [ ] Systemd service for auto-start
-- [ ] Network configuration
-- [ ] Display configuration
-- [ ] Ansible playbook for automated setup
-- [ ] Terraform configuration (if applicable)
+- [x] Raspberry Pi OS setup guide
+- [x] Chromium kiosk configuration
+- [x] Systemd service for auto-start
+- [x] Network configuration
+- [x] Display configuration
+- [x] Ansible playbook for automated setup
+- [x] Terraform configuration
 
 
 ### Homer Integration
-- [ ] Three-finger swipe gesture detection
-- [ ] Homer URL configuration in settings
-- [ ] Swipe right to navigate to Homer dashboard
-- [ ] Visual feedback for gesture recognition
-- [ ] Configurable gesture sensitivity
+- [x] Three-finger swipe gesture detection
+- [x] Homer URL configuration in settings
+- [x] Swipe right to navigate to Homer dashboard
+- [x] Visual feedback for gesture recognition
+- [x] Configurable gesture sensitivity
