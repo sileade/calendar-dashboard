@@ -1,0 +1,61 @@
+CREATE TABLE `calendar_connections` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`provider` enum('google','apple','notion') NOT NULL,
+	`isConnected` boolean NOT NULL DEFAULT false,
+	`syncDirection` enum('none','pull','push','bidirectional') NOT NULL DEFAULT 'bidirectional',
+	`accessToken` text,
+	`refreshToken` text,
+	`tokenExpiresAt` bigint,
+	`caldavUrl` text,
+	`caldavUsername` varchar(255),
+	`caldavPassword` text,
+	`notionDatabaseId` varchar(64),
+	`notionAccessToken` text,
+	`calendarId` varchar(255),
+	`calendarName` varchar(255),
+	`color` varchar(7) DEFAULT '#007AFF',
+	`lastSyncAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `calendar_connections_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `events` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`connectionId` int,
+	`googleEventId` varchar(255),
+	`appleEventId` varchar(255),
+	`notionPageId` varchar(64),
+	`title` varchar(500) NOT NULL,
+	`description` text,
+	`location` text,
+	`startTime` bigint NOT NULL,
+	`endTime` bigint NOT NULL,
+	`isAllDay` boolean NOT NULL DEFAULT false,
+	`recurrenceRule` text,
+	`source` enum('local','google','apple','notion') NOT NULL DEFAULT 'local',
+	`syncStatus` enum('synced','pending','error') NOT NULL DEFAULT 'pending',
+	`lastSyncError` text,
+	`color` varchar(7) DEFAULT '#007AFF',
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `events_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `sync_logs` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`connectionId` int NOT NULL,
+	`action` enum('pull','push','conflict_resolved') NOT NULL,
+	`eventsProcessed` int NOT NULL DEFAULT 0,
+	`eventsCreated` int NOT NULL DEFAULT 0,
+	`eventsUpdated` int NOT NULL DEFAULT 0,
+	`eventsDeleted` int NOT NULL DEFAULT 0,
+	`status` enum('success','partial','failed') NOT NULL,
+	`errorMessage` text,
+	`startedAt` timestamp NOT NULL DEFAULT (now()),
+	`completedAt` timestamp,
+	CONSTRAINT `sync_logs_id` PRIMARY KEY(`id`)
+);
