@@ -107,3 +107,28 @@
 - [x] Swipe right to navigate to Homer dashboard
 - [x] Visual feedback for gesture recognition
 - [x] Configurable gesture sensitivity
+
+
+## Widgets (v1.3)
+
+### SPb Public Transport Widget
+- [x] Research SPb transport API (Портал открытых данных СПб)
+- [x] Create transport widget component
+- [x] Display nearest stops and arrival times
+- [x] Support for metro, bus, tram, trolleybus
+- [x] Configurable favorite stops
+- [x] Real-time updates
+
+### Yandex Traffic Widget
+- [x] Research Yandex Traffic API/embed options
+- [x] Create traffic widget component
+- [x] Display traffic score (1-10 points)
+- [x] Show traffic map embed
+- [x] Color-coded traffic indicators
+- [x] Configurable city/region
+
+### Widget Integration
+- [x] Add widgets panel to dashboard
+- [x] Widget visibility toggle
+- [x] Widget position configuration
+- [x] Responsive layout for widgets

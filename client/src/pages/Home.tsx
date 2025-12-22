@@ -20,6 +20,8 @@ import { ReminderTime } from '@shared/types';
 import { toast } from 'sonner';
 import { KioskSettingsModal, useKioskMode, useKioskSettings } from '@/components/calendar/KioskSettings';
 import { useHomerSwipe } from '@/hooks/useSwipeGesture';
+import { WidgetsPanel } from '@/components/widgets/WidgetsPanel';
+import { LayoutGrid } from 'lucide-react';
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -31,6 +33,7 @@ export default function Home() {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [initialEventDate, setInitialEventDate] = useState<Date | undefined>();
   const [isKioskSettingsOpen, setIsKioskSettingsOpen] = useState(false);
+  const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
   
   // Kiosk mode
   const kioskSettings = useKioskMode();
@@ -388,6 +391,17 @@ export default function Home() {
               <Printer className="w-5 h-5" />
             </Button>
             
+            {/* Widgets Panel */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsWidgetsPanelOpen(true)}
+              className="rounded-full"
+              title="Widgets"
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </Button>
+            
             {/* Kiosk Mode */}
             <Button
               variant="ghost"
@@ -469,6 +483,11 @@ export default function Home() {
       <KioskSettingsModal
         isOpen={isKioskSettingsOpen}
         onClose={() => setIsKioskSettingsOpen(false)}
+      />
+
+      <WidgetsPanel
+        isOpen={isWidgetsPanelOpen}
+        onOpenChange={setIsWidgetsPanelOpen}
       />
       
       {/* Kiosk Mode Indicator */}
