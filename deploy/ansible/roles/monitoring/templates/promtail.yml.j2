@@ -1,0 +1,28 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: {{ loki_url }}/loki/api/v1/push
+
+scrape_configs:
+  - job_name: kiosk
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: calendar-kiosk
+          host: {{ inventory_hostname }}
+          __path__: /var/log/kiosk/*.log
+    
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          host: {{ inventory_hostname }}
+          __path__: /var/log/syslog

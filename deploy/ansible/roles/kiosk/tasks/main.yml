@@ -1,0 +1,64 @@
+---
+- name: Deploy kiosk script
+  template:
+    src: kiosk.sh.j2
+    dest: /home/pi/scripts/kiosk.sh
+    owner: pi
+    group: pi
+    mode: '0755'
+  notify: restart kiosk
+
+- name: Deploy environment file
+  template:
+    src: kiosk-env.j2
+    dest: /home/pi/.kiosk-env
+    owner: pi
+    group: pi
+    mode: '0644'
+  notify: restart kiosk
+
+- name: Create Openbox config directory
+  file:
+    path: /home/pi/.config/openbox
+    state: directory
+    owner: pi
+    group: pi
+    mode: '0755'
+
+- name: Deploy Openbox autostart
+  template:
+    src: openbox-autostart.j2
+    dest: /home/pi/.config/openbox/autostart
+    owner: pi
+    group: pi
+    mode: '0644'
+
+- name: Deploy systemd service
+  template:
+    src: calendar-kiosk.service.j2
+    dest: /etc/systemd/system/calendar-kiosk.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart kiosk
+
+- name: Enable kiosk service
+  systemd:
+    name: calendar-kiosk
+    enabled: yes
+    daemon_reload: yes
+
+- name: Deploy health check script
+  template:
+    src: health-check.sh.j2
+    dest: /home/pi/scripts/health-check.sh
+    owner: pi
+    group: pi
+    mode: '0755'
+
+- name: Setup health check cron
+  cron:
+    name: "Kiosk health check"
+    minute: "*/5"
+    job: "/home/pi/scripts/health-check.sh >> /var/log/kiosk/health.log 2>&1"
+    user: pi

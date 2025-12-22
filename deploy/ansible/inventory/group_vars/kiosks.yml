@@ -1,0 +1,31 @@
+# Calendar Dashboard Configuration
+calendar_url: "https://your-calendar-dashboard.manus.space"
+homer_url: "http://homer.local:8080"
+
+# Display Configuration
+kiosk_rotation: "0"
+auto_refresh_interval: 5
+
+# System Configuration
+timezone: "Europe/Moscow"
+locale: "ru_RU.UTF-8"
+
+# Packages
+required_packages:
+  - chromium-browser
+  - xserver-xorg
+  - x11-xserver-utils
+  - xinit
+  - openbox
+  - lightdm
+  - unclutter
+  - xdotool
+  - fonts-noto
+  - fonts-liberation
+  - python3-pip
+  - network-manager
+
+# Monitoring
+enable_monitoring: true
+grafana_url: "http://grafana.local:3000"
+loki_url: "http://loki.local:3100"

@@ -13,11 +13,13 @@ import { SyncSettingsModal } from '@/components/calendar/SyncSettingsModal';
 import { PrintModal } from '@/components/calendar/PrintModal';
 import { CalendarView } from '@shared/types';
 import { Event } from '../../../drizzle/schema';
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange, Printer, RefreshCw, LogIn, Search, Bell, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange, Printer, RefreshCw, LogIn, Search, Bell, Repeat, Monitor } from 'lucide-react';
 import { SearchFilter } from '@/components/calendar/SearchFilter';
 import { NotificationCenter, useNotificationPermission, showBrowserNotification } from '@/components/calendar/NotificationCenter';
 import { ReminderTime } from '@shared/types';
 import { toast } from 'sonner';
+import { KioskSettingsModal, useKioskMode, useKioskSettings } from '@/components/calendar/KioskSettings';
+import { useHomerSwipe } from '@/hooks/useSwipeGesture';
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -28,6 +30,14 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [initialEventDate, setInitialEventDate] = useState<Date | undefined>();
+  const [isKioskSettingsOpen, setIsKioskSettingsOpen] = useState(false);
+  
+  // Kiosk mode
+  const kioskSettings = useKioskMode();
+  const { settings: kioskConfig } = useKioskSettings();
+  
+  // Homer swipe gesture
+  useHomerSwipe(kioskConfig.homerUrl, kioskConfig.enabled && kioskConfig.swipeGesturesEnabled);
 
   // Fetch events for current view range
   const dateRange = useMemo(() => {
@@ -378,6 +388,17 @@ export default function Home() {
               <Printer className="w-5 h-5" />
             </Button>
             
+            {/* Kiosk Mode */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsKioskSettingsOpen(true)}
+              className={`rounded-full ${kioskConfig.enabled ? 'text-primary' : ''}`}
+              title="Kiosk Mode Settings"
+            >
+              <Monitor className="w-5 h-5" />
+            </Button>
+            
             {/* Notifications */}
             <NotificationCenter />
           </div>
@@ -444,6 +465,22 @@ export default function Home() {
         currentDate={currentDate}
         events={events}
       />
+
+      <KioskSettingsModal
+        isOpen={isKioskSettingsOpen}
+        onClose={() => setIsKioskSettingsOpen(false)}
+      />
+      
+      {/* Kiosk Mode Indicator */}
+      {kioskConfig.enabled && (
+        <div className="fixed bottom-4 right-4 bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
+          <Monitor className="w-4 h-4" />
+          Kiosk Mode
+          {kioskConfig.homerUrl && (
+            <span className="text-xs opacity-75">• Swipe → Homer</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

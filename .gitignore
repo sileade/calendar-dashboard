@@ -105,3 +105,17 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Terraform
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.*
+deploy/terraform/.terraform.lock.hcl
+deploy/terraform/output/
+
+# Ansible
+deploy/ansible/*.retry
+deploy/ansible/facts/
+
+# Kiosk user data
+chromium-kiosk/

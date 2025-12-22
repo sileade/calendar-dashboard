@@ -337,3 +337,113 @@
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
 }
+
+/* Kiosk Mode Styles */
+@layer components {
+  /* Swipe gesture feedback */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideInLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary); }
+    50% { box-shadow: 0 0 15px var(--primary), 0 0 25px var(--primary); }
+  }
+  
+  .swipe-indicator {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, oklch(0.65 0.2 250), transparent);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.2s;
+  }
+  
+  .swipe-indicator.left {
+    left: 0;
+  }
+  
+  .swipe-indicator.right {
+    right: 0;
+  }
+  
+  /* Kiosk mode specific styles */
+  .kiosk-mode {
+    /* Remove scrollbars in kiosk mode */
+    overflow: hidden;
+  }
+  
+  .kiosk-mode::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Touch-friendly adjustments */
+  @media (pointer: coarse) {
+    .kiosk-mode button,
+    .kiosk-mode [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    .kiosk-mode .calendar-event {
+      padding: 8px 12px;
+    }
+  }
+  
+  /* Fullscreen optimizations */
+  .kiosk-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+  }
+  
+  /* Homer navigation indicator */
+  .homer-nav-hint {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, oklch(0.65 0.2 250 / 0.3), transparent);
+    border-radius: 4px 0 0 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .kiosk-mode .homer-nav-hint {
+    opacity: 1;
+  }
+  
+  .kiosk-mode .homer-nav-hint:hover {
+    background: linear-gradient(to bottom, transparent, oklch(0.65 0.2 250 / 0.5), transparent);
+  }
+}
+
+/* Print styles for kiosk mode */
+@media print {
+  .kiosk-mode-indicator,
+  .homer-nav-hint,
+  .swipe-indicator {
+    display: none !important;
+  }
+}

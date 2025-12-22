@@ -1,0 +1,59 @@
+---
+- name: Update system packages
+  apt:
+    upgrade: dist
+    update_cache: yes
+  register: apt_upgrade
+
+- name: Set reboot required flag
+  set_fact:
+    reboot_required: true
+  when: apt_upgrade.changed
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Set locale
+  locale_gen:
+    name: "{{ locale }}"
+    state: present
+
+- name: Install required packages
+  apt:
+    name: "{{ required_packages }}"
+    state: present
+
+- name: Create pi user directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: pi
+    group: pi
+    mode: '0755'
+  loop:
+    - /home/pi/scripts
+    - /home/pi/.config
+    - /var/log/kiosk
+
+- name: Configure GPU memory
+  lineinfile:
+    path: /boot/config.txt
+    regexp: '^gpu_mem='
+    line: 'gpu_mem=128'
+  notify: reboot required
+
+- name: Enable hardware acceleration
+  lineinfile:
+    path: /boot/config.txt
+    regexp: '^dtoverlay=vc4-kms-v3d'
+    line: 'dtoverlay=vc4-kms-v3d'
+  notify: reboot required
+
+- name: Configure automatic login
+  command: raspi-config nonint do_boot_behaviour B4
+  changed_when: false
+
+- name: Disable screen blanking
+  command: raspi-config nonint do_blanking 1
+  changed_when: false

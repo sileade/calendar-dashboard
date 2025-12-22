@@ -1,0 +1,55 @@
+---
+- name: Deploy Calendar Kiosk
+  hosts: kiosks
+  become: yes
+  
+  vars_prompt:
+    - name: calendar_url_input
+      prompt: "Enter Calendar Dashboard URL"
+      default: "{{ calendar_url }}"
+      private: no
+    
+    - name: homer_url_input
+      prompt: "Enter Homer Dashboard URL"
+      default: "{{ homer_url }}"
+      private: no
+
+  pre_tasks:
+    - name: Set calendar URL from prompt
+      set_fact:
+        calendar_url: "{{ calendar_url_input }}"
+      when: calendar_url_input is defined and calendar_url_input != ""
+
+    - name: Set homer URL from prompt
+      set_fact:
+        homer_url: "{{ homer_url_input }}"
+      when: homer_url_input is defined and homer_url_input != ""
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+  roles:
+    - common
+    - kiosk
+    - homer
+    - monitoring
+
+  post_tasks:
+    - name: Reboot if required
+      reboot:
+        msg: "Rebooting for kiosk setup"
+        reboot_timeout: 300
+      when: reboot_required | default(false)
+
+    - name: Display completion message
+      debug:
+        msg: |
+          Calendar Kiosk deployment complete!
+          
+          Calendar URL: {{ calendar_url }}
+          Homer URL: {{ homer_url }}
+          
+          The kiosk will start automatically on boot.
+          Use 3-finger swipe right to navigate to Homer.

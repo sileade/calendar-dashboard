@@ -1,0 +1,19 @@
+[Unit]
+Description=Calendar Dashboard Kiosk
+After=graphical.target
+Wants=graphical.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+Environment=CALENDAR_URL={{ calendar_url }}
+Environment=HOMER_URL={{ homer_url }}
+ExecStart=/home/pi/scripts/kiosk.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical.target

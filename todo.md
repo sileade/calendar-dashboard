@@ -65,3 +65,45 @@
 - [x] In-app notification center
 - [x] Sound/vibration options (preferences)
 - [ ] Snooze functionality (future enhancement)
+
+
+## Documentation & Deployment (v1.2)
+
+### Documentation
+- [ ] README.md with project overview
+- [ ] API documentation
+- [ ] Architecture documentation
+- [ ] Installation guide
+- [ ] Configuration guide
+- [ ] User manual
+
+### GitHub Repository
+- [ ] Create repository
+- [ ] Push code to GitHub
+- [ ] Add .gitignore
+- [ ] Add LICENSE file
+
+### Kiosk Mode Adaptation
+- [ ] Fullscreen mode support
+- [ ] Auto-hide cursor
+- [ ] Disable context menu
+- [ ] Touch-friendly UI adjustments
+- [ ] Auto-refresh functionality
+- [ ] Offline mode support
+
+### Raspberry Pi Deployment
+- [ ] Raspberry Pi OS setup guide
+- [ ] Chromium kiosk configuration
+- [ ] Systemd service for auto-start
+- [ ] Network configuration
+- [ ] Display configuration
+- [ ] Ansible playbook for automated setup
+- [ ] Terraform configuration (if applicable)
+
+
+### Homer Integration
+- [ ] Three-finger swipe gesture detection
+- [ ] Homer URL configuration in settings
+- [ ] Swipe right to navigate to Homer dashboard
+- [ ] Visual feedback for gesture recognition
+- [ ] Configurable gesture sensitivity

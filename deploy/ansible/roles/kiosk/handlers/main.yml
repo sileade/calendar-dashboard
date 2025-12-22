@@ -1,0 +1,14 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart kiosk
+  systemd:
+    name: calendar-kiosk
+    state: restarted
+  ignore_errors: yes
+
+- name: reboot required
+  set_fact:
+    reboot_required: true
