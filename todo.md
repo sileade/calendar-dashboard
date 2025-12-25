@@ -205,3 +205,11 @@
 - [x] Visual indicator showing last update time
 - [x] Configurable refresh intervals in settings
 - [x] Pause auto-refresh when tab is not visible
+
+
+### Geolocation in Traffic Widget
+- [x] Integrate useGeolocation hook in TrafficWidgetCompact
+- [x] Display current location name
+- [x] Show location accuracy indicator
+- [x] Add button to request location permission
+- [x] Update Yandex Maps link with current coordinates

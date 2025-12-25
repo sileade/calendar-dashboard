@@ -8,9 +8,13 @@ import {
   ExternalLink,
   Loader2,
   Pause,
-  Play
+  Play,
+  MapPin,
+  Navigation,
+  AlertCircle
 } from 'lucide-react';
 import { useAutoRefresh, REFRESH_INTERVALS, formatLastRefresh, formatTimeUntilRefresh } from '@/hooks/useAutoRefresh';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TrafficData {
@@ -48,13 +52,49 @@ const TRAFFIC_DESCRIPTIONS: Record<number, string> = {
   10: 'Город стоит',
 };
 
+// Determine city name based on coordinates
+function getCityName(lat: number, lon: number): string {
+  // St. Petersburg area
+  if (lat >= 59.7 && lat <= 60.2 && lon >= 29.5 && lon <= 31.0) {
+    return 'Санкт-Петербург';
+  }
+  // Moscow area
+  if (lat >= 55.5 && lat <= 56.0 && lon >= 37.0 && lon <= 38.0) {
+    return 'Москва';
+  }
+  // Default
+  return 'Ваш район';
+}
+
 export function TrafficWidgetCompact() {
   const [trafficData, setTrafficData] = useState<TrafficData | null>(null);
+  
+  // Geolocation hook
+  const {
+    location,
+    error: geoError,
+    isLoading: geoLoading,
+    permissionStatus,
+    getCurrentPosition,
+    defaultLocation,
+  } = useGeolocation({
+    enableHighAccuracy: false,
+    timeout: 5000,
+    maximumAge: 300000, // 5 minutes cache
+  });
+
+  const currentLocation = location || defaultLocation;
+  const cityName = getCityName(currentLocation.lat, currentLocation.lon);
 
   const fetchTrafficData = useCallback(async () => {
     try {
-      // Simulated data - in production this would use Yandex Maps API
-      const level = Math.floor(Math.random() * 6) + 3;
+      // In production, this would use Yandex Maps API with current location
+      // const response = await fetch(`/api/traffic?lat=${currentLocation.lat}&lon=${currentLocation.lon}`);
+      
+      // Simulated data - varies slightly based on location
+      const baseLevelForLocation = Math.abs(Math.round(currentLocation.lat * 10) % 5);
+      const level = Math.min(10, Math.max(0, baseLevelForLocation + Math.floor(Math.random() * 4)));
+      
       const mockData: TrafficData = {
         level,
         localTime: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
@@ -66,7 +106,7 @@ export function TrafficWidgetCompact() {
     } catch (err) {
       console.error('Failed to fetch traffic data:', err);
     }
-  }, []);
+  }, [currentLocation.lat, currentLocation.lon]);
 
   const {
     isRefreshing,
@@ -99,6 +139,33 @@ export function TrafficWidgetCompact() {
     return TRAFFIC_COLORS[Math.min(Math.max(level, 0), 10)];
   };
 
+  const getLocationStatusIcon = () => {
+    if (geoLoading) {
+      return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />;
+    }
+    if (geoError || permissionStatus === 'denied') {
+      return <AlertCircle className="h-3 w-3 text-yellow-500" />;
+    }
+    if (location) {
+      return <Navigation className="h-3 w-3 text-green-500" />;
+    }
+    return <MapPin className="h-3 w-3 text-muted-foreground" />;
+  };
+
+  const getLocationTooltip = () => {
+    if (geoLoading) return 'Определение местоположения...';
+    if (geoError) return `Ошибка: ${geoError}. Используется СПб по умолчанию`;
+    if (permissionStatus === 'denied') return 'Доступ к геолокации запрещён. Используется СПб по умолчанию';
+    if (location) {
+      const accuracy = location.accuracy ? ` (±${Math.round(location.accuracy)}м)` : '';
+      return `${cityName}${accuracy}`;
+    }
+    return 'Нажмите для определения местоположения';
+  };
+
+  // Build Yandex Maps URL with current coordinates
+  const yandexMapsUrl = `https://yandex.ru/maps/?ll=${currentLocation.lon},${currentLocation.lat}&z=12&l=trf`;
+
   if (isRefreshing && !trafficData) {
     return (
       <div className="p-3 rounded-xl bg-muted/30 flex items-center justify-center">
@@ -115,7 +182,22 @@ export function TrafficWidgetCompact() {
       <div className="px-3 py-2 flex items-center justify-between border-b border-border/50">
         <div className="flex items-center gap-2">
           <Car className="h-4 w-4 text-orange-500" />
-          <span className="text-xs font-medium">Пробки СПб</span>
+          <span className="text-xs font-medium">Пробки</span>
+          {/* Location indicator */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={getCurrentPosition}
+                className="p-0.5 hover:bg-secondary rounded transition-colors"
+                disabled={geoLoading}
+              >
+                {getLocationStatusIcon()}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs max-w-[200px]">
+              {getLocationTooltip()}
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="flex items-center gap-1">
           <Tooltip>
@@ -163,8 +245,11 @@ export function TrafficWidgetCompact() {
               <span className="text-sm font-medium truncate">{trafficData.description}</span>
               {getTrendIcon()}
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {trafficData.localTime}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+              <MapPin className="h-3 w-3" />
+              <span className="truncate">{cityName}</span>
+              <span>•</span>
+              <span>{trafficData.localTime}</span>
             </div>
           </div>
         </div>
@@ -193,9 +278,9 @@ export function TrafficWidgetCompact() {
           )}
         </div>
 
-        {/* Link to Yandex Maps */}
+        {/* Link to Yandex Maps with current location */}
         <a
-          href="https://yandex.ru/maps/2/saint-petersburg/probki"
+          href={yandexMapsUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 py-1"
