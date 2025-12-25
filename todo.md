@@ -186,3 +186,10 @@
 - [x] Move traffic widget to sidebar under mini-calendar
 - [x] Make traffic widget always visible
 - [x] Compact traffic widget design for sidebar
+
+
+### Weather Widget in Sidebar
+- [x] Create compact weather widget for sidebar
+- [x] Display current temperature and conditions
+- [x] Add weather icon
+- [x] Integrate under traffic widget in sidebar

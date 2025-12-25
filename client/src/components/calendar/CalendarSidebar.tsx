@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TrafficWidgetCompact } from '../widgets/TrafficWidgetCompact';
+import { WeatherWidgetCompact } from '../widgets/WeatherWidgetCompact';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Settings, Calendar as CalendarIcon, Cloud, CloudOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -130,8 +131,13 @@ export function CalendarSidebar({
       </div>
 
       {/* Traffic Widget */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-2">
         <TrafficWidgetCompact />
+      </div>
+
+      {/* Weather Widget */}
+      <div className="px-4 pb-4">
+        <WeatherWidgetCompact />
       </div>
 
       {/* Calendar List */}
