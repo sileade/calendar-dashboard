@@ -213,3 +213,21 @@
 - [x] Show location accuracy indicator
 - [x] Add button to request location permission
 - [x] Update Yandex Maps link with current coordinates
+
+
+## Enhanced Location & Notifications (v1.9)
+
+### District Detection by GPS
+- [x] Create reverse geocoding service for district detection
+- [x] Map GPS coordinates to city districts (Санкт-Петербург районы)
+- [x] Display district name in traffic widget
+- [x] Support for Moscow and other major cities
+- [x] Fallback to city name if district not detected
+
+### Traffic Spike Notifications
+- [x] Track traffic level history
+- [x] Detect sudden traffic level increases (spike detection)
+- [x] Browser notification when traffic spikes
+- [x] Configurable spike threshold (e.g., +2 points)
+- [x] Sound alert option for traffic spikes
+- [x] Notification cooldown to prevent spam

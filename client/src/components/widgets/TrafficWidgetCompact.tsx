@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   Car, 
   RefreshCw,
@@ -11,11 +11,24 @@ import {
   Play,
   MapPin,
   Navigation,
-  AlertCircle
+  AlertCircle,
+  Bell,
+  BellOff,
+  Settings2
 } from 'lucide-react';
 import { useAutoRefresh, REFRESH_INTERVALS, formatLastRefresh, formatTimeUntilRefresh } from '@/hooks/useAutoRefresh';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useTrafficNotifications } from '@/hooks/useTrafficNotifications';
+import { detectDistrict, getShortLocation } from '@/services/districtDetection';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 
 interface TrafficData {
   level: number;
@@ -52,29 +65,16 @@ const TRAFFIC_DESCRIPTIONS: Record<number, string> = {
   10: 'Город стоит',
 };
 
-// Determine city name based on coordinates
-function getCityName(lat: number, lon: number): string {
-  // St. Petersburg area
-  if (lat >= 59.7 && lat <= 60.2 && lon >= 29.5 && lon <= 31.0) {
-    return 'Санкт-Петербург';
-  }
-  // Moscow area
-  if (lat >= 55.5 && lat <= 56.0 && lon >= 37.0 && lon <= 38.0) {
-    return 'Москва';
-  }
-  // Default
-  return 'Ваш район';
-}
-
 export function TrafficWidgetCompact() {
   const [trafficData, setTrafficData] = useState<TrafficData | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   
   // Geolocation hook
   const {
     location,
     error: geoError,
     isLoading: geoLoading,
-    permissionStatus,
+    permissionStatus: geoPermissionStatus,
     getCurrentPosition,
     defaultLocation,
   } = useGeolocation({
@@ -83,8 +83,21 @@ export function TrafficWidgetCompact() {
     maximumAge: 300000, // 5 minutes cache
   });
 
+  // Traffic notifications hook
+  const {
+    settings: notificationSettings,
+    updateSettings: updateNotificationSettings,
+    permissionStatus: notificationPermissionStatus,
+    requestPermission: requestNotificationPermission,
+    trackTrafficLevel,
+    getTrafficTrend,
+  } = useTrafficNotifications();
+
   const currentLocation = location || defaultLocation;
-  const cityName = getCityName(currentLocation.lat, currentLocation.lon);
+  
+  // Get detailed location info using district detection
+  const locationInfo = detectDistrict(currentLocation.lat, currentLocation.lon);
+  const shortLocation = getShortLocation(currentLocation.lat, currentLocation.lon);
 
   const fetchTrafficData = useCallback(async () => {
     try {
@@ -95,18 +108,21 @@ export function TrafficWidgetCompact() {
       const baseLevelForLocation = Math.abs(Math.round(currentLocation.lat * 10) % 5);
       const level = Math.min(10, Math.max(0, baseLevelForLocation + Math.floor(Math.random() * 4)));
       
+      // Track level for notifications
+      trackTrafficLevel(level);
+      
       const mockData: TrafficData = {
         level,
         localTime: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
         description: TRAFFIC_DESCRIPTIONS[level],
-        trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as 'up' | 'down' | 'stable',
+        trend: getTrafficTrend(),
       };
       
       setTrafficData(mockData);
     } catch (err) {
       console.error('Failed to fetch traffic data:', err);
     }
-  }, [currentLocation.lat, currentLocation.lon]);
+  }, [currentLocation.lat, currentLocation.lon, trackTrafficLevel, getTrafficTrend]);
 
   const {
     isRefreshing,
@@ -121,6 +137,24 @@ export function TrafficWidgetCompact() {
     immediate: true,
     pauseOnHidden: true,
   });
+
+  // Request notification permission on mount if enabled
+  useEffect(() => {
+    if (notificationSettings.enabled && notificationPermissionStatus === 'default') {
+      // Don't auto-request, let user enable it
+    }
+  }, [notificationSettings.enabled, notificationPermissionStatus]);
+
+  const handleEnableNotifications = async () => {
+    if (notificationPermissionStatus !== 'granted') {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        updateNotificationSettings({ enabled: true });
+      }
+    } else {
+      updateNotificationSettings({ enabled: !notificationSettings.enabled });
+    }
+  };
 
   const getTrendIcon = () => {
     if (!trafficData) return null;
@@ -143,7 +177,7 @@ export function TrafficWidgetCompact() {
     if (geoLoading) {
       return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />;
     }
-    if (geoError || permissionStatus === 'denied') {
+    if (geoError || geoPermissionStatus === 'denied') {
       return <AlertCircle className="h-3 w-3 text-yellow-500" />;
     }
     if (location) {
@@ -155,12 +189,23 @@ export function TrafficWidgetCompact() {
   const getLocationTooltip = () => {
     if (geoLoading) return 'Определение местоположения...';
     if (geoError) return `Ошибка: ${geoError}. Используется СПб по умолчанию`;
-    if (permissionStatus === 'denied') return 'Доступ к геолокации запрещён. Используется СПб по умолчанию';
+    if (geoPermissionStatus === 'denied') return 'Доступ к геолокации запрещён. Используется СПб по умолчанию';
     if (location) {
       const accuracy = location.accuracy ? ` (±${Math.round(location.accuracy)}м)` : '';
-      return `${cityName}${accuracy}`;
+      const districtInfo = locationInfo.districtShort ? `${locationInfo.districtShort}, ` : '';
+      return `${districtInfo}${locationInfo.city}${accuracy}`;
     }
     return 'Нажмите для определения местоположения';
+  };
+
+  const getNotificationIcon = () => {
+    if (notificationPermissionStatus === 'denied') {
+      return <BellOff className="h-3 w-3 text-muted-foreground" />;
+    }
+    if (notificationSettings.enabled && notificationPermissionStatus === 'granted') {
+      return <Bell className="h-3 w-3 text-green-500" />;
+    }
+    return <BellOff className="h-3 w-3 text-muted-foreground" />;
   };
 
   // Build Yandex Maps URL with current coordinates
@@ -200,6 +245,98 @@ export function TrafficWidgetCompact() {
           </Tooltip>
         </div>
         <div className="flex items-center gap-1">
+          {/* Notification toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleEnableNotifications}
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
+              >
+                {getNotificationIcon()}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {notificationPermissionStatus === 'denied' 
+                ? 'Уведомления заблокированы в браузере'
+                : notificationSettings.enabled 
+                  ? 'Уведомления о пробках включены' 
+                  : 'Включить уведомления о пробках'}
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Settings popover */}
+          <Popover open={showSettings} onOpenChange={setShowSettings}>
+            <PopoverTrigger asChild>
+              <button className="p-1 hover:bg-secondary rounded-md transition-colors">
+                <Settings2 className="h-3 w-3 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" align="end">
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm">Настройки уведомлений</h4>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notifications-enabled" className="text-xs">
+                    Уведомления о пробках
+                  </Label>
+                  <Switch
+                    id="notifications-enabled"
+                    checked={notificationSettings.enabled}
+                    onCheckedChange={(checked) => {
+                      if (checked && notificationPermissionStatus !== 'granted') {
+                        requestNotificationPermission();
+                      }
+                      updateNotificationSettings({ enabled: checked });
+                    }}
+                    disabled={notificationPermissionStatus === 'denied'}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">
+                    Порог оповещения: +{notificationSettings.spikeThreshold} балла
+                  </Label>
+                  <Slider
+                    value={[notificationSettings.spikeThreshold]}
+                    onValueChange={([value]) => updateNotificationSettings({ spikeThreshold: value })}
+                    min={1}
+                    max={5}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Уведомление при росте пробок на {notificationSettings.spikeThreshold}+ баллов
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="sound-enabled" className="text-xs">
+                    Звуковой сигнал
+                  </Label>
+                  <Switch
+                    id="sound-enabled"
+                    checked={notificationSettings.soundEnabled}
+                    onCheckedChange={(checked) => updateNotificationSettings({ soundEnabled: checked })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">
+                    Пауза между уведомлениями: {notificationSettings.cooldownMinutes} мин
+                  </Label>
+                  <Slider
+                    value={[notificationSettings.cooldownMinutes]}
+                    onValueChange={([value]) => updateNotificationSettings({ cooldownMinutes: value })}
+                    min={5}
+                    max={60}
+                    step={5}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -247,7 +384,9 @@ export function TrafficWidgetCompact() {
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
               <MapPin className="h-3 w-3" />
-              <span className="truncate">{cityName}</span>
+              <span className="truncate" title={locationInfo.district || locationInfo.city}>
+                {shortLocation}
+              </span>
               <span>•</span>
               <span>{trafficData.localTime}</span>
             </div>
