@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TrafficWidgetCompact } from '../widgets/TrafficWidgetCompact';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Settings, Calendar as CalendarIcon, Cloud, CloudOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -126,6 +127,11 @@ export function CalendarSidebar({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Traffic Widget */}
+      <div className="px-4 pb-4">
+        <TrafficWidgetCompact />
       </div>
 
       {/* Calendar List */}

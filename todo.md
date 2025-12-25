@@ -178,3 +178,11 @@
 - [x] Touch-friendly UI for different sizes
 - [x] Orientation support (portrait/landscape)
 - [x] DPI-aware rendering
+
+
+## UI Improvements (v1.5)
+
+### Traffic Widget Relocation
+- [x] Move traffic widget to sidebar under mini-calendar
+- [x] Make traffic widget always visible
+- [x] Compact traffic widget design for sidebar
