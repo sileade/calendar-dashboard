@@ -25,6 +25,7 @@ import { LayoutGrid, Palette } from 'lucide-react';
 import { ThemeSettings } from '@/components/calendar/ThemeSettings';
 import { useAdaptiveTheme } from '@/hooks/useAdaptiveTheme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useAutoRefresh, REFRESH_INTERVALS, formatLastRefresh } from '@/hooks/useAutoRefresh';
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -64,6 +65,22 @@ export default function Home() {
     dateRange,
     { enabled: isAuthenticated }
   );
+
+  // Auto-refresh calendar events
+  const {
+    lastRefresh: calendarLastRefresh,
+    isRefreshing: isCalendarRefreshing,
+    isPaused: isCalendarPaused,
+    refresh: refreshCalendar,
+    toggle: toggleCalendarRefresh,
+  } = useAutoRefresh({
+    interval: REFRESH_INTERVALS.CALENDAR,
+    onRefresh: async () => {
+      await refetchEvents();
+    },
+    enabled: isAuthenticated,
+    pauseOnHidden: true,
+  });
 
   const { data: connections = [], refetch: refetchConnections } = trpc.connections.list.useQuery(
     undefined,
@@ -380,16 +397,25 @@ export default function Home() {
               </Button>
             </div>
 
-            {/* Actions */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => triggerSync.mutate({})}
-              disabled={triggerSync.isPending}
-              className="rounded-full"
-            >
-              <RefreshCw className={`w-5 h-5 ${triggerSync.isPending ? 'animate-spin' : ''}`} />
-            </Button>
+            {/* Actions - Sync with auto-refresh indicator */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  refreshCalendar();
+                  triggerSync.mutate({});
+                }}
+                disabled={triggerSync.isPending || isCalendarRefreshing}
+                className="rounded-full"
+                title={`Синхронизация (${formatLastRefresh(calendarLastRefresh)})`}
+              >
+                <RefreshCw className={`w-5 h-5 ${(triggerSync.isPending || isCalendarRefreshing) ? 'animate-spin' : ''}`} />
+              </Button>
+              {!isCalendarPaused && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              )}
+            </div>
             <Button
               variant="ghost"
               size="icon"

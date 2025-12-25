@@ -193,3 +193,15 @@
 - [x] Display current temperature and conditions
 - [x] Add weather icon
 - [x] Integrate under traffic widget in sidebar
+
+
+## Auto-Refresh Features (v1.7)
+
+### Auto-Refresh Implementation
+- [x] Create useAutoRefresh hook for periodic data updates
+- [x] Add auto-refresh to traffic widget (configurable interval)
+- [x] Add auto-refresh to weather widget
+- [x] Add auto-refresh to calendar events
+- [x] Visual indicator showing last update time
+- [x] Configurable refresh intervals in settings
+- [x] Pause auto-refresh when tab is not visible

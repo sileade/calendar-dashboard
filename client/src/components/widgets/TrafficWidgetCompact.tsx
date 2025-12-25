@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   Car, 
   RefreshCw,
@@ -6,8 +6,12 @@ import {
   TrendingDown,
   Minus,
   ExternalLink,
-  Loader2
+  Loader2,
+  Pause,
+  Play
 } from 'lucide-react';
+import { useAutoRefresh, REFRESH_INTERVALS, formatLastRefresh, formatTimeUntilRefresh } from '@/hooks/useAutoRefresh';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TrafficData {
   level: number;
@@ -46,11 +50,8 @@ const TRAFFIC_DESCRIPTIONS: Record<number, string> = {
 
 export function TrafficWidgetCompact() {
   const [trafficData, setTrafficData] = useState<TrafficData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const fetchTrafficData = useCallback(async () => {
-    setIsLoading(true);
-    
     try {
       // Simulated data - in production this would use Yandex Maps API
       const level = Math.floor(Math.random() * 6) + 3;
@@ -64,16 +65,22 @@ export function TrafficWidgetCompact() {
       setTrafficData(mockData);
     } catch (err) {
       console.error('Failed to fetch traffic data:', err);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchTrafficData();
-    const interval = setInterval(fetchTrafficData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchTrafficData]);
+  const {
+    isRefreshing,
+    lastRefresh,
+    isPaused,
+    timeUntilRefresh,
+    refresh,
+    toggle,
+  } = useAutoRefresh({
+    interval: REFRESH_INTERVALS.TRAFFIC,
+    onRefresh: fetchTrafficData,
+    immediate: true,
+    pauseOnHidden: true,
+  });
 
   const getTrendIcon = () => {
     if (!trafficData) return null;
@@ -92,7 +99,7 @@ export function TrafficWidgetCompact() {
     return TRAFFIC_COLORS[Math.min(Math.max(level, 0), 10)];
   };
 
-  if (isLoading && !trafficData) {
+  if (isRefreshing && !trafficData) {
     return (
       <div className="p-3 rounded-xl bg-muted/30 flex items-center justify-center">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -110,13 +117,39 @@ export function TrafficWidgetCompact() {
           <Car className="h-4 w-4 text-orange-500" />
           <span className="text-xs font-medium">Пробки СПб</span>
         </div>
-        <button
-          onClick={fetchTrafficData}
-          className="p-1 hover:bg-secondary rounded-md transition-colors"
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-3 w-3 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggle}
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
+              >
+                {isPaused ? (
+                  <Play className="h-3 w-3 text-muted-foreground" />
+                ) : (
+                  <Pause className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {isPaused ? 'Возобновить авто-обновление' : 'Приостановить авто-обновление'}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={refresh}
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-3 w-3 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Обновить сейчас
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Traffic Score */}
@@ -146,12 +179,26 @@ export function TrafficWidgetCompact() {
           ))}
         </div>
 
+        {/* Auto-refresh indicator */}
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2">
+          <span>{formatLastRefresh(lastRefresh)}</span>
+          {!isPaused && (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              {formatTimeUntilRefresh(timeUntilRefresh)}
+            </span>
+          )}
+          {isPaused && (
+            <span className="text-yellow-500">Приостановлено</span>
+          )}
+        </div>
+
         {/* Link to Yandex Maps */}
         <a
           href="https://yandex.ru/maps/2/saint-petersburg/probki"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
+          className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 py-1"
         >
           <ExternalLink className="h-3 w-3" />
           Яндекс.Карты

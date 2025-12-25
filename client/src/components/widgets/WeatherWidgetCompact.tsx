@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   Cloud, 
   Sun, 
@@ -10,8 +10,12 @@ import {
   RefreshCw,
   Loader2,
   ExternalLink,
-  Thermometer
+  Thermometer,
+  Pause,
+  Play
 } from 'lucide-react';
+import { useAutoRefresh, REFRESH_INTERVALS, formatLastRefresh, formatTimeUntilRefresh } from '@/hooks/useAutoRefresh';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WeatherData {
   temperature: number;
@@ -50,11 +54,8 @@ const WEATHER_CONDITIONS_RU: Record<string, string> = {
 
 export function WeatherWidgetCompact() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const fetchWeatherData = useCallback(async () => {
-    setIsLoading(true);
-    
     try {
       // Simulated data - in production this would use OpenWeatherMap API
       const conditions = ['clear', 'clouds', 'rain', 'snow'];
@@ -75,16 +76,22 @@ export function WeatherWidgetCompact() {
       setWeatherData(mockData);
     } catch (err) {
       console.error('Failed to fetch weather data:', err);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchWeatherData();
-    const interval = setInterval(fetchWeatherData, 30 * 60 * 1000); // Update every 30 min
-    return () => clearInterval(interval);
-  }, [fetchWeatherData]);
+  const {
+    isRefreshing,
+    lastRefresh,
+    isPaused,
+    timeUntilRefresh,
+    refresh,
+    toggle,
+  } = useAutoRefresh({
+    interval: REFRESH_INTERVALS.WEATHER,
+    onRefresh: fetchWeatherData,
+    immediate: true,
+    pauseOnHidden: true,
+  });
 
   const getWeatherIcon = (code: string) => {
     const Icon = WEATHER_ICONS[code] || Cloud;
@@ -100,7 +107,7 @@ export function WeatherWidgetCompact() {
     return 'text-red-400';
   };
 
-  if (isLoading && !weatherData) {
+  if (isRefreshing && !weatherData) {
     return (
       <div className="p-3 rounded-xl bg-muted/30 flex items-center justify-center">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -120,13 +127,39 @@ export function WeatherWidgetCompact() {
           <Thermometer className="h-4 w-4 text-blue-400" />
           <span className="text-xs font-medium">Погода</span>
         </div>
-        <button
-          onClick={fetchWeatherData}
-          className="p-1 hover:bg-secondary rounded-md transition-colors"
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-3 w-3 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggle}
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
+              >
+                {isPaused ? (
+                  <Play className="h-3 w-3 text-muted-foreground" />
+                ) : (
+                  <Pause className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {isPaused ? 'Возобновить авто-обновление' : 'Приостановить авто-обновление'}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={refresh}
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-3 w-3 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Обновить сейчас
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Weather Info */}
@@ -161,12 +194,26 @@ export function WeatherWidgetCompact() {
           </div>
         </div>
 
+        {/* Auto-refresh indicator */}
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2">
+          <span>{formatLastRefresh(lastRefresh)}</span>
+          {!isPaused && (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              {formatTimeUntilRefresh(timeUntilRefresh)}
+            </span>
+          )}
+          {isPaused && (
+            <span className="text-yellow-500">Приостановлено</span>
+          )}
+        </div>
+
         {/* Link to Weather Service */}
         <a
           href="https://yandex.ru/pogoda/saint-petersburg"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
+          className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 py-1"
         >
           <ExternalLink className="h-3 w-3" />
           Яндекс.Погода
