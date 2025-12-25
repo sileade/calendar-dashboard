@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { TrafficWidgetCompact } from '../widgets/TrafficWidgetCompact';
 import { WeatherWidgetCompact } from '../widgets/WeatherWidgetCompact';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from 'date-fns';
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CalendarConnection } from '../../../../drizzle/schema';
 import { PROVIDER_COLORS } from '@shared/types';
+import { useTouch } from '@/hooks/useTouch';
+import { TouchFeedback } from '@/components/ui/touch-ripple';
 
 interface CalendarSidebarProps {
   currentDate: Date;
@@ -26,6 +28,21 @@ export function CalendarSidebar({
   onToggleConnection,
 }: CalendarSidebarProps) {
   const [miniCalendarDate, setMiniCalendarDate] = useState(currentDate);
+
+  // Swipe handlers for mini calendar
+  const handleSwipeLeft = useCallback(() => {
+    setMiniCalendarDate(addMonths(miniCalendarDate, 1));
+  }, [miniCalendarDate]);
+
+  const handleSwipeRight = useCallback(() => {
+    setMiniCalendarDate(subMonths(miniCalendarDate, 1));
+  }, [miniCalendarDate]);
+
+  const { ref: miniCalendarRef } = useTouch<HTMLDivElement>({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    swipeThreshold: 30,
+  });
 
   const getMiniCalendarDays = () => {
     const monthStart = startOfMonth(miniCalendarDate);
@@ -73,59 +90,70 @@ export function CalendarSidebar({
   };
 
   return (
-    <div className="w-64 h-full flex flex-col bg-sidebar border-r border-sidebar-border">
-      {/* New Event Button */}
+    <div className="w-64 h-full flex flex-col bg-sidebar border-r border-sidebar-border touch-scroll-hide overflow-y-auto">
+      {/* New Event Button - Touch optimized */}
       <div className="p-4">
-        <Button
-          onClick={onNewEvent}
-          className="w-full gap-2 apple-shadow"
-          size="lg"
-        >
-          <Plus className="w-5 h-5" />
-          New Event
-        </Button>
+        <TouchFeedback className="rounded-xl">
+          <Button
+            onClick={onNewEvent}
+            className="w-full gap-2 apple-shadow touch-button"
+            size="lg"
+          >
+            <Plus className="w-5 h-5" />
+            New Event
+          </Button>
+        </TouchFeedback>
       </div>
 
-      {/* Mini Calendar */}
-      <div className="px-4 pb-4">
+      {/* Mini Calendar - Swipeable */}
+      <div className="px-4 pb-4" ref={miniCalendarRef}>
         <div className="flex items-center justify-between mb-3">
-          <button
-            onClick={() => setMiniCalendarDate(subMonths(miniCalendarDate, 1))}
-            className="p-1 hover:bg-secondary rounded-md transition-colors"
+          <TouchFeedback 
+            className="rounded-lg"
+            onPress={() => setMiniCalendarDate(subMonths(miniCalendarDate, 1))}
           >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+            <div className="p-2 hover:bg-secondary rounded-md transition-colors touch-target">
+              <ChevronLeft className="w-5 h-5" />
+            </div>
+          </TouchFeedback>
           <span className="text-sm font-medium">
             {format(miniCalendarDate, 'MMMM yyyy')}
           </span>
-          <button
-            onClick={() => setMiniCalendarDate(addMonths(miniCalendarDate, 1))}
-            className="p-1 hover:bg-secondary rounded-md transition-colors"
+          <TouchFeedback 
+            className="rounded-lg"
+            onPress={() => setMiniCalendarDate(addMonths(miniCalendarDate, 1))}
           >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            <div className="p-2 hover:bg-secondary rounded-md transition-colors touch-target">
+              <ChevronRight className="w-5 h-5" />
+            </div>
+          </TouchFeedback>
         </div>
 
         <div className="grid grid-cols-7 gap-0.5 text-center">
           {weekDays.map((day, idx) => (
-            <div key={idx} className="text-xs text-muted-foreground py-1">
+            <div key={idx} className="text-xs text-muted-foreground py-1 font-medium">
               {day}
             </div>
           ))}
           {getMiniCalendarDays().map((day, idx) => (
-            <button
+            <TouchFeedback
               key={idx}
-              onClick={() => onDateChange(day)}
-              className={cn(
-                "text-xs py-1.5 rounded-full transition-colors",
-                !isSameMonth(day, miniCalendarDate) && "text-muted-foreground/50",
-                isSameDay(day, currentDate) && "bg-primary text-primary-foreground",
-                isToday(day) && !isSameDay(day, currentDate) && "text-primary font-semibold",
-                !isSameDay(day, currentDate) && "hover:bg-secondary"
-              )}
+              className="rounded-full"
+              onPress={() => onDateChange(day)}
             >
-              {format(day, 'd')}
-            </button>
+              <div
+                className={cn(
+                  "text-xs py-2 px-1 rounded-full transition-colors touch-target",
+                  "min-w-[32px] min-h-[32px] flex items-center justify-center",
+                  !isSameMonth(day, miniCalendarDate) && "text-muted-foreground/50",
+                  isSameDay(day, currentDate) && "bg-primary text-primary-foreground",
+                  isToday(day) && !isSameDay(day, currentDate) && "text-primary font-semibold",
+                  !isSameDay(day, currentDate) && "hover:bg-secondary active:bg-secondary"
+                )}
+              >
+                {format(day, 'd')}
+              </div>
+            </TouchFeedback>
           ))}
         </div>
       </div>
@@ -140,51 +168,51 @@ export function CalendarSidebar({
         <WeatherWidgetCompact />
       </div>
 
-      {/* Calendar List */}
-      <div className="flex-1 overflow-y-auto px-4">
+      {/* Calendar List - Touch optimized */}
+      <div className="flex-1 overflow-y-auto px-4 touch-scroll-hide">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Calendars
           </span>
-          <button
-            onClick={onOpenSettings}
-            className="p-1 hover:bg-secondary rounded-md transition-colors"
-          >
-            <Settings className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <TouchFeedback className="rounded-lg" onPress={onOpenSettings}>
+            <div className="p-2 hover:bg-secondary rounded-md transition-colors touch-target">
+              <Settings className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </TouchFeedback>
         </div>
 
         <div className="space-y-1">
           {/* Local Calendar */}
-          <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary/50 transition-colors">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: '#34C759' }}
-            />
-            <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-            <span className="flex-1 text-sm">Local Calendar</span>
-          </div>
+          <TouchFeedback className="rounded-lg">
+            <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary/50 transition-colors touch-list-item border-none">
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: '#34C759' }}
+              />
+              <CalendarIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="flex-1 text-sm">Local Calendar</span>
+            </div>
+          </TouchFeedback>
 
           {/* Connected Calendars */}
           {connections.map((conn) => (
-            <div
-              key={conn.id}
-              className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary/50 transition-colors"
-            >
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: conn.color || '#007AFF' }}
-              />
-              {getProviderIcon(conn.provider)}
-              <span className="flex-1 text-sm truncate">
-                {conn.calendarName || `${conn.provider} Calendar`}
-              </span>
-              {conn.isConnected ? (
-                <Cloud className="w-4 h-4 text-green-500" />
-              ) : (
-                <CloudOff className="w-4 h-4 text-muted-foreground" />
-              )}
-            </div>
+            <TouchFeedback key={conn.id} className="rounded-lg">
+              <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary/50 transition-colors touch-list-item border-none">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: conn.color || '#007AFF' }}
+                />
+                {getProviderIcon(conn.provider)}
+                <span className="flex-1 text-sm truncate">
+                  {conn.calendarName || `${conn.provider} Calendar`}
+                </span>
+                {conn.isConnected ? (
+                  <Cloud className="w-4 h-4 text-green-500 flex-shrink-0" />
+                ) : (
+                  <CloudOff className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                )}
+              </div>
+            </TouchFeedback>
           ))}
 
           {connections.length === 0 && (
@@ -195,15 +223,14 @@ export function CalendarSidebar({
         </div>
       </div>
 
-      {/* Settings Link */}
+      {/* Settings Link - Touch optimized */}
       <div className="p-4 border-t border-sidebar-border">
-        <button
-          onClick={onOpenSettings}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
-        >
-          <Settings className="w-4 h-4" />
-          Sync Settings
-        </button>
+        <TouchFeedback className="rounded-lg" onPress={onOpenSettings}>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full px-3 py-3 touch-list-item border-none rounded-lg">
+            <Settings className="w-4 h-4" />
+            Sync Settings
+          </div>
+        </TouchFeedback>
       </div>
     </div>
   );

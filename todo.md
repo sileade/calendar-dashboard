@@ -231,3 +231,33 @@
 - [x] Configurable spike threshold (e.g., +2 points)
 - [x] Sound alert option for traffic spikes
 - [x] Notification cooldown to prevent spam
+
+
+## Touchscreen Adaptation (v2.0)
+
+### Touch Gestures & Interactions
+- [x] Create useTouch hook for swipe detection
+- [x] Swipe left/right to change month/week/day
+- [x] Long press on date to create event
+- [x] Pinch-to-zoom for calendar view switching
+- [x] Pull-to-refresh for data updates
+
+### Touch-Optimized UI Elements
+- [x] Increase button tap targets to 44px minimum
+- [x] Add touch-friendly spacing between elements
+- [x] Larger calendar day cells for finger tapping
+- [x] Touch-optimized event cards with larger hit areas
+- [x] Swipeable event list items
+
+### Touch Feedback
+- [x] Visual feedback on tap (ripple effect)
+- [x] Haptic feedback support (vibration API)
+- [x] Active state styling for touch interactions
+- [x] Smooth animations for touch gestures
+
+### Mobile/Tablet Optimizations
+- [x] Prevent accidental zooming (viewport meta)
+- [x] Disable text selection during gestures
+- [x] Touch-scroll optimization
+- [x] Bottom sheet modals for mobile
+- [x] Floating action button for new event

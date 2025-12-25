@@ -447,3 +447,405 @@
     display: none !important;
   }
 }
+
+
+/* =====================================================
+   TOUCHSCREEN OPTIMIZATION STYLES (v2.0)
+   ===================================================== */
+
+/* Touch ripple animation */
+@keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out forwards;
+}
+
+/* Touch-friendly base styles */
+@layer base {
+  /* Prevent text selection during touch interactions */
+  .touch-none-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Prevent zooming on double-tap */
+  html {
+    touch-action: manipulation;
+  }
+  
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Touch-optimized components */
+@layer components {
+  /* Minimum touch target size (44x44px as per Apple HIG) */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Larger touch target for important actions */
+  .touch-target-lg {
+    min-height: 56px;
+    min-width: 56px;
+  }
+  
+  /* Touch-friendly button base */
+  .touch-button {
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 12px;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Touch-friendly input fields */
+  .touch-input {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    border-radius: 12px;
+  }
+  
+  /* Touch-friendly list items */
+  .touch-list-item {
+    min-height: 56px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  /* Active state for touch elements */
+  .touch-active:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  /* Touch-friendly calendar day cell */
+  .touch-calendar-cell {
+    min-height: 80px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    touch-action: manipulation;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+  }
+  
+  .touch-calendar-cell:active {
+    background-color: var(--secondary);
+    transform: scale(0.98);
+  }
+  
+  /* Touch-friendly event chip */
+  .touch-event-chip {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    touch-action: manipulation;
+  }
+  
+  .touch-event-chip:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  /* Floating Action Button (FAB) */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .fab:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Bottom Sheet Modal */
+  .bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--background);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 200;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  
+  .bottom-sheet.open {
+    transform: translateY(0);
+  }
+  
+  .bottom-sheet-handle {
+    width: 36px;
+    height: 5px;
+    background: var(--muted-foreground);
+    opacity: 0.3;
+    border-radius: 3px;
+    margin: 8px auto 16px;
+  }
+  
+  .bottom-sheet-content {
+    padding: 0 20px 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 40px);
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Swipe navigation indicators */
+  .swipe-nav-indicator {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 50;
+  }
+  
+  .swipe-nav-indicator.left {
+    left: 0;
+    background: linear-gradient(to right, var(--primary) 0%, transparent 100%);
+    border-radius: 0 12px 12px 0;
+  }
+  
+  .swipe-nav-indicator.right {
+    right: 0;
+    background: linear-gradient(to left, var(--primary) 0%, transparent 100%);
+    border-radius: 12px 0 0 12px;
+  }
+  
+  .swipe-nav-indicator.active {
+    opacity: 0.6;
+  }
+  
+  /* Pull to refresh indicator */
+  .pull-refresh-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+  
+  .pull-refresh-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--muted);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Touch-friendly navigation tabs */
+  .touch-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--muted);
+    border-radius: 12px;
+  }
+  
+  .touch-tab {
+    flex: 1;
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    touch-action: manipulation;
+  }
+  
+  .touch-tab.active {
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .touch-tab:not(.active) {
+    color: var(--muted-foreground);
+  }
+  
+  .touch-tab:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Touch-specific media queries */
+@media (pointer: coarse) {
+  /* Increase touch targets on touch devices */
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Larger spacing for touch */
+  .calendar-grid {
+    gap: 2px;
+  }
+  
+  .calendar-cell {
+    min-height: 80px;
+    padding: 6px;
+  }
+  
+  .event-chip {
+    font-size: 12px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+  }
+  
+  /* Larger scrollbar for touch */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  
+  /* Hide scrollbar on touch devices for cleaner look */
+  .touch-scroll-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .touch-scroll-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 768px) and (pointer: coarse) {
+  .touch-calendar-cell {
+    min-height: 100px;
+  }
+  
+  .fab {
+    bottom: 32px;
+    right: 32px;
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+  }
+}
+
+/* Large touch screens (kiosk displays) */
+@media (min-width: 1024px) and (pointer: coarse) {
+  .touch-calendar-cell {
+    min-height: 120px;
+    padding: 12px;
+  }
+  
+  .touch-event-chip {
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .touch-button {
+    min-height: 56px;
+    padding: 16px 24px;
+    font-size: 18px;
+  }
+}
+
+/* Dark mode touch adjustments */
+.dark {
+  .touch-calendar-cell:active {
+    background-color: oklch(0.3 0.006 286);
+  }
+  
+  .bottom-sheet {
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  }
+  
+  .fab {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Gesture hint animations */
+@keyframes swipeHint {
+  0%, 100% { transform: translateX(0); opacity: 0.5; }
+  50% { transform: translateX(10px); opacity: 1; }
+}
+
+@keyframes longPressHint {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+
+.animate-swipe-hint {
+  animation: swipeHint 1.5s ease-in-out infinite;
+}
+
+.animate-long-press-hint {
+  animation: longPressHint 2s ease-in-out infinite;
+}

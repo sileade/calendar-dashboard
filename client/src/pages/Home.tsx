@@ -13,7 +13,7 @@ import { SyncSettingsModal } from '@/components/calendar/SyncSettingsModal';
 import { PrintModal } from '@/components/calendar/PrintModal';
 import { CalendarView } from '@shared/types';
 import { Event } from '../../../drizzle/schema';
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange, Printer, RefreshCw, LogIn, Search, Bell, Repeat, Monitor } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, CalendarRange, Printer, RefreshCw, LogIn, Search, Bell, Repeat, Monitor, Plus } from 'lucide-react';
 import { SearchFilter } from '@/components/calendar/SearchFilter';
 import { NotificationCenter, useNotificationPermission, showBrowserNotification } from '@/components/calendar/NotificationCenter';
 import { ReminderTime } from '@shared/types';
@@ -321,7 +321,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background">
+    <div className="h-screen flex overflow-hidden bg-background touch-manipulation">
       {/* Sidebar */}
       <CalendarSidebar
         currentDate={currentDate}
@@ -477,6 +477,7 @@ export default function Home() {
               events={events}
               onDateClick={handleDateClick}
               onEventClick={handleEventClick}
+              onMonthChange={setCurrentDate}
             />
           )}
           {view === 'week' && (
@@ -540,9 +541,20 @@ export default function Home() {
         onClose={() => setIsThemeSettingsOpen(false)}
       />
       
+      {/* Floating Action Button for touch devices */}
+      {isTouch && (
+        <button
+          onClick={handleNewEvent}
+          className="fab bg-primary text-primary-foreground hover:bg-primary/90"
+          aria-label="Создать событие"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
+
       {/* Kiosk Mode Indicator */}
       {kioskConfig.enabled && (
-        <div className="fixed bottom-4 right-4 bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
+        <div className={`fixed ${isTouch ? 'bottom-24' : 'bottom-4'} right-4 bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg`}>
           <Monitor className="w-4 h-4" />
           Kiosk Mode
           {kioskConfig.homerUrl && (
